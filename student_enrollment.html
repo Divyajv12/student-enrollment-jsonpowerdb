@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Enrollment Form</title>
+    <script src="https://login2explore.com/jpdb/resources/js/0.0.4/jpdb-commons.js"></script>
+</head>
+
+<body onload="initForm()">
+
+<h2>Student Enrollment Form</h2>
+
+<form id="studentForm">
+    Roll No: <input type="text" id="roll" onblur="checkRoll()"><br><br>
+
+    Full Name: <input type="text" id="name" disabled><br><br>
+    Class: <input type="text" id="class" disabled><br><br>
+    Birth Date: <input type="date" id="dob" disabled><br><br>
+    Address: <input type="text" id="address" disabled><br><br>
+    Enrollment Date: <input type="date" id="enrollDate" disabled><br><br>
+
+    <button type="button" id="saveBtn" onclick="saveData()" disabled>Save</button>
+    <button type="button" id="updateBtn" onclick="updateData()" disabled>Update</button>
+    <button type="button" id="resetBtn" onclick="resetForm()" disabled>Reset</button>
+</form>
+
+<script>
+const token = "YOUR_JPDB_TOKEN";
+const dbName = "SCHOOL-DB";
+const relName = "STUDENT-TABLE";
+
+function initForm() {
+    document.getElementById("roll").focus();
+}
+
+function enableFields() {
+    document.getElementById("name").disabled = false;
+    document.getElementById("class").disabled = false;
+    document.getElementById("dob").disabled = false;
+    document.getElementById("address").disabled = false;
+    document.getElementById("enrollDate").disabled = false;
+}
+
+function checkRoll() {
+    let roll = document.getElementById("roll").value;
+    if (roll === "") return;
+
+    let req = createGET_BY_KEYRequest(token, dbName, relName,
+        JSON.stringify({ "Roll-No": roll }));
+
+    let res = executeCommandAtGivenBaseUrl(req,
+        "http://api.login2explore.com:5577", "/api/irl");
+
+    if (res.status === 200) {
+        // Record exists → Update
+        let data = JSON.parse(res.data).record;
+        document.getElementById("name").value = data["Full-Name"];
+        document.getElementById("class").value = data["Class"];
+        document.getElementById("dob").value = data["Birth-Date"];
+        document.getElementById("address").value = data["Address"];
+        document.getElementById("enrollDate").value = data["Enrollment-Date"];
+
+        enableFields();
+        document.getElementById("roll").disabled = true;
+        document.getElementById("updateBtn").disabled = false;
+        document.getElementById("resetBtn").disabled = false;
+    } else {
+        // New record → Save
+        enableFields();
+        document.getElementById("saveBtn").disabled = false;
+        document.getElementById("resetBtn").disabled = false;
+    }
+}
+
+function validate() {
+    return document.getElementById("name").value !== "" &&
+           document.getElementById("class").value !== "" &&
+           document.getElementById("dob").value !== "" &&
+           document.getElementById("address").value !== "" &&
+           document.getElementById("enrollDate").value !== "";
+}
+
+function saveData() {
+    if (!validate()) {
+        alert("All fields are required");
+        return;
+    }
+
+    let json = {
+        "Roll-No": roll.value,
+        "Full-Name": name.value,
+        "Class": class.value,
+        "Birth-Date": dob.value,
+        "Address": address.value,
+        "Enrollment-Date": enrollDate.value
+    };
+
+    let req = createPUTRequest(token, JSON.stringify(json), dbName, relName);
+    executeCommandAtGivenBaseUrl(req,
+        "http://api.login2explore.com:5577", "/api/iml");
+
+    resetForm();
+}
+
+function updateData() {
+    if (!validate()) {
+        alert("All fields are required");
+        return;
+    }
+
+    let json = {
+        "Roll-No": roll.value,
+        "Full-Name": name.value,
+        "Class": class.value,
+        "Birth-Date": dob.value,
+        "Address": address.value,
+        "Enrollment-Date": enrollDate.value
+    };
+
+    let req = createUPDATERecordRequest(token, JSON.stringify(json),
+        dbName, relName, roll.value);
+
+    executeCommandAtGivenBaseUrl(req,
+        "http://api.login2explore.com:5577", "/api/iml");
+
+    resetForm();
+}
+
+function resetForm() {
+    document.getElementById("studentForm").reset();
+    location.reload();
+}
+</script>
+
+</body>
+</html>
